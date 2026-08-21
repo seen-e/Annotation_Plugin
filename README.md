@@ -37,6 +37,8 @@ Use the right-side `← Previous` / `Next →` buttons, the bottom navigation bu
 
 Images with no bbox and unchecked `Reviewed` are skipped during navigation, so empty JSON files are not created.
 
+Use the View controls to adjust display-only brightness and contrast for dark or low-contrast images. These filters do not modify the source image or annotation coordinates.
+
 When a selected bbox is deleted, the next bbox is selected automatically; deleting the last bbox selects the previous one.
 
 Large folders are handled with cached image status updates, so navigation only loads the target image and its annotation file.

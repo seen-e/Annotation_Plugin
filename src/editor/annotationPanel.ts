@@ -373,6 +373,20 @@ export class AnnotationPanel {
         <section class="side-section reviewed-row">
           <label><input id="reviewedInput" type="checkbox"> Reviewed</label>
         </section>
+        <section class="side-section view-section">
+          <h2>View</h2>
+          <label class="range-row">
+            <span>Brightness</span>
+            <input id="brightnessInput" type="range" min="50" max="200" value="100">
+            <output id="brightnessValue">100%</output>
+          </label>
+          <label class="range-row">
+            <span>Contrast</span>
+            <input id="contrastInput" type="range" min="50" max="220" value="100">
+            <output id="contrastValue">100%</output>
+          </label>
+          <button id="resetViewButton" type="button" class="reset-view-button">Reset View</button>
+        </section>
         <section class="side-section annotations-section">
           <h2>Annotations</h2>
           <div id="annotationList" class="annotation-list"></div>

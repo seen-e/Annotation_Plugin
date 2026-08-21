@@ -27,6 +27,11 @@
       this.addLabelButton = document.getElementById('addLabelButton');
       this.labelManageList = document.getElementById('labelManageList');
       this.reviewedInput = document.getElementById('reviewedInput');
+      this.brightnessInput = document.getElementById('brightnessInput');
+      this.contrastInput = document.getElementById('contrastInput');
+      this.brightnessValue = document.getElementById('brightnessValue');
+      this.contrastValue = document.getElementById('contrastValue');
+      this.resetViewButton = document.getElementById('resetViewButton');
       this.saveStatus = document.getElementById('saveStatus');
       this.openImageButton = document.getElementById('openImageButton');
       this.openFolderButton = document.getElementById('openFolderButton');
@@ -49,6 +54,8 @@
       this.currentLabel = 'left_gripper';
       this.selectedId = undefined;
       this.zoom = 'fit';
+      this.brightness = 100;
+      this.contrast = 100;
       this.dirty = false;
       this.loadedHadSavedData = false;
       this.imageButtons = new Map();
@@ -89,6 +96,9 @@
       this.newLabelInput.addEventListener('keydown', (event) => this.handleLabelInputKeyDown(event));
       this.newHotkeyInput.addEventListener('keydown', (event) => this.handleLabelInputKeyDown(event));
       this.reviewedInput.addEventListener('change', () => this.setReviewed(this.reviewedInput.checked));
+      this.brightnessInput.addEventListener('input', () => this.updateImageFilter());
+      this.contrastInput.addEventListener('input', () => this.updateImageFilter());
+      this.resetViewButton.addEventListener('click', () => this.resetViewAdjustments());
       window.addEventListener('keydown', (event) => this.handleKeyDown(event));
       document.addEventListener('mousedown', (event) => this.handleDocumentMouseDown(event));
     }
@@ -504,6 +514,20 @@
         this.image.style.width = `${this.image.naturalWidth * this.zoom}px`;
         this.image.style.height = 'auto';
       }
+    }
+
+    updateImageFilter() {
+      this.brightness = Number(this.brightnessInput.value);
+      this.contrast = Number(this.contrastInput.value);
+      this.brightnessValue.textContent = `${this.brightness}%`;
+      this.contrastValue.textContent = `${this.contrast}%`;
+      this.image.style.filter = `brightness(${this.brightness}%) contrast(${this.contrast}%)`;
+    }
+
+    resetViewAdjustments() {
+      this.brightnessInput.value = '100';
+      this.contrastInput.value = '100';
+      this.updateImageFilter();
     }
 
     renderLabels() {

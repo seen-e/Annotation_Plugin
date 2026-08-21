@@ -191,7 +191,7 @@ input {
 
 .sidebar {
   display: grid;
-  grid-template-rows: minmax(110px, 1.2fr) auto auto minmax(100px, 1fr);
+  grid-template-rows: minmax(110px, 1.2fr) auto auto auto minmax(100px, 1fr);
   min-width: 0;
   min-height: 0;
   padding: 10px;
@@ -347,6 +347,44 @@ input {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.view-section {
+  display: grid;
+  gap: 7px;
+}
+
+.range-row {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 6px;
+}
+
+.range-row span,
+.range-row output {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.range-row output {
+  text-align: right;
+}
+
+.range-row input {
+  width: 100%;
+}
+
+.reset-view-button {
+  min-height: 26px;
+  color: var(--button-fg);
+  background: var(--button);
+  border: 0;
+  border-radius: 4px;
+}
+
+.reset-view-button:hover {
+  background: var(--button-hover);
 }
 
 .footerbar {
