@@ -1,0 +1,2 @@
+# Annotation_Plugin
+用于手动标注验证检测框的vscode插件
