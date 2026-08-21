@@ -343,6 +343,7 @@ export class AnnotationPanel {
       <section class="stage-panel">
         <div id="stage" class="stage">
           <div id="imageStack" class="image-stack">
+            <canvas id="imageDisplay"></canvas>
             <img id="image" alt="Selected image">
             <canvas id="overlay"></canvas>
             <div id="labelPopup" class="label-popup" hidden></div>
@@ -376,14 +377,23 @@ export class AnnotationPanel {
         <section class="side-section view-section">
           <h2>View</h2>
           <label class="range-row">
-            <span>Brightness</span>
-            <input id="brightnessInput" type="range" min="50" max="200" value="100">
-            <output id="brightnessValue">100%</output>
+            <span>Beta</span>
+            <input id="betaInput" type="range" min="-100" max="100" value="0">
+            <output id="betaValue">0</output>
           </label>
           <label class="range-row">
-            <span>Contrast</span>
-            <input id="contrastInput" type="range" min="50" max="220" value="100">
-            <output id="contrastValue">100%</output>
+            <span>Alpha</span>
+            <input id="alphaInput" type="range" min="0.2" max="3" step="0.05" value="1">
+            <output id="alphaValue">1.00</output>
+          </label>
+          <label class="range-row">
+            <span>Gamma</span>
+            <input id="gammaInput" type="range" min="0.2" max="3" step="0.05" value="1">
+            <output id="gammaValue">1.00</output>
+          </label>
+          <label class="clahe-row">
+            <input id="claheInput" type="checkbox">
+            <span>CLAHE</span>
           </label>
           <button id="resetViewButton" type="button" class="reset-view-button">Reset View</button>
         </section>

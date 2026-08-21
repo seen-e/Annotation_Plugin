@@ -16,6 +16,8 @@
   class AnnotatorApp {
     constructor() {
       this.image = document.getElementById('image');
+      this.imageDisplay = document.getElementById('imageDisplay');
+      this.imageDisplayContext = this.imageDisplay.getContext('2d', { willReadFrequently: true });
       this.canvas = document.getElementById('overlay');
       this.stage = document.getElementById('stage');
       this.imageList = document.getElementById('imageList');
@@ -27,10 +29,13 @@
       this.addLabelButton = document.getElementById('addLabelButton');
       this.labelManageList = document.getElementById('labelManageList');
       this.reviewedInput = document.getElementById('reviewedInput');
-      this.brightnessInput = document.getElementById('brightnessInput');
-      this.contrastInput = document.getElementById('contrastInput');
-      this.brightnessValue = document.getElementById('brightnessValue');
-      this.contrastValue = document.getElementById('contrastValue');
+      this.betaInput = document.getElementById('betaInput');
+      this.alphaInput = document.getElementById('alphaInput');
+      this.gammaInput = document.getElementById('gammaInput');
+      this.claheInput = document.getElementById('claheInput');
+      this.betaValue = document.getElementById('betaValue');
+      this.alphaValue = document.getElementById('alphaValue');
+      this.gammaValue = document.getElementById('gammaValue');
       this.resetViewButton = document.getElementById('resetViewButton');
       this.saveStatus = document.getElementById('saveStatus');
       this.openImageButton = document.getElementById('openImageButton');
@@ -54,8 +59,11 @@
       this.currentLabel = 'left_gripper';
       this.selectedId = undefined;
       this.zoom = 'fit';
-      this.brightness = 100;
-      this.contrast = 100;
+      this.beta = 0;
+      this.alpha = 1;
+      this.gamma = 1;
+      this.clahe = false;
+      this.pendingEnhancementFrame = 0;
       this.dirty = false;
       this.loadedHadSavedData = false;
       this.imageButtons = new Map();
@@ -96,10 +104,13 @@
       this.newLabelInput.addEventListener('keydown', (event) => this.handleLabelInputKeyDown(event));
       this.newHotkeyInput.addEventListener('keydown', (event) => this.handleLabelInputKeyDown(event));
       this.reviewedInput.addEventListener('change', () => this.setReviewed(this.reviewedInput.checked));
-      this.brightnessInput.addEventListener('input', () => this.updateImageFilter());
-      this.contrastInput.addEventListener('input', () => this.updateImageFilter());
+      this.betaInput.addEventListener('input', () => this.updateImageEnhancement());
+      this.alphaInput.addEventListener('input', () => this.updateImageEnhancement());
+      this.gammaInput.addEventListener('input', () => this.updateImageEnhancement());
+      this.claheInput.addEventListener('change', () => this.updateImageEnhancement());
       this.resetViewButton.addEventListener('click', () => this.resetViewAdjustments());
       window.addEventListener('keydown', (event) => this.handleKeyDown(event));
+      window.addEventListener('resize', () => this.scheduleDisplayRender());
       document.addEventListener('mousedown', (event) => this.handleDocumentMouseDown(event));
     }
 
@@ -174,6 +185,7 @@
 
     loadImageUri(imageUri) {
       this.image.removeAttribute('src');
+      this.clearDisplayCanvas();
       this.applyZoom();
       this.image.src = imageUri;
     }
@@ -191,7 +203,10 @@
       this.renderAnnotations();
       this.updateCounter();
       this.applyZoom();
-      requestAnimationFrame(() => this.canvasController.syncCanvas());
+      requestAnimationFrame(() => {
+        this.renderDisplayImage();
+        this.canvasController.syncCanvas();
+      });
     }
 
     emptyAnnotation(image) {
@@ -493,7 +508,10 @@
     setFit() {
       this.zoom = 'fit';
       this.applyZoom();
-      requestAnimationFrame(() => this.canvasController.syncCanvas());
+      requestAnimationFrame(() => {
+        this.renderDisplayImage();
+        this.canvasController.syncCanvas();
+      });
     }
 
     zoomBy(factor) {
@@ -501,7 +519,10 @@
       const baseZoom = currentWidth / this.image.naturalWidth;
       this.zoom = Math.min(Math.max(baseZoom * factor, 0.1), 8);
       this.applyZoom();
-      requestAnimationFrame(() => this.canvasController.syncCanvas());
+      requestAnimationFrame(() => {
+        this.renderDisplayImage();
+        this.canvasController.syncCanvas();
+      });
     }
 
     applyZoom() {
@@ -516,18 +537,168 @@
       }
     }
 
-    updateImageFilter() {
-      this.brightness = Number(this.brightnessInput.value);
-      this.contrast = Number(this.contrastInput.value);
-      this.brightnessValue.textContent = `${this.brightness}%`;
-      this.contrastValue.textContent = `${this.contrast}%`;
-      this.image.style.filter = `brightness(${this.brightness}%) contrast(${this.contrast}%)`;
+    updateImageEnhancement() {
+      this.beta = Number(this.betaInput.value);
+      this.alpha = Number(this.alphaInput.value);
+      this.gamma = Number(this.gammaInput.value);
+      this.clahe = this.claheInput.checked;
+      this.betaValue.textContent = String(this.beta);
+      this.alphaValue.textContent = this.alpha.toFixed(2);
+      this.gammaValue.textContent = this.gamma.toFixed(2);
+      this.scheduleDisplayRender();
     }
 
     resetViewAdjustments() {
-      this.brightnessInput.value = '100';
-      this.contrastInput.value = '100';
-      this.updateImageFilter();
+      this.betaInput.value = '0';
+      this.alphaInput.value = '1';
+      this.gammaInput.value = '1';
+      this.claheInput.checked = false;
+      this.updateImageEnhancement();
+    }
+
+    scheduleDisplayRender() {
+      if (this.pendingEnhancementFrame) {
+        cancelAnimationFrame(this.pendingEnhancementFrame);
+      }
+      this.pendingEnhancementFrame = requestAnimationFrame(() => {
+        this.pendingEnhancementFrame = 0;
+        this.renderDisplayImage();
+        this.canvasController.syncCanvas();
+      });
+    }
+
+    clearDisplayCanvas() {
+      this.imageDisplayContext.clearRect(0, 0, this.imageDisplay.width, this.imageDisplay.height);
+    }
+
+    syncDisplayCanvasSize() {
+      const rect = this.image.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      this.imageDisplay.style.width = `${rect.width}px`;
+      this.imageDisplay.style.height = `${rect.height}px`;
+      if (this.imageDisplay.width !== width || this.imageDisplay.height !== height) {
+        this.imageDisplay.width = width;
+        this.imageDisplay.height = height;
+      }
+      return { width, height };
+    }
+
+    renderDisplayImage() {
+      if (!this.image.complete || !this.image.naturalWidth || !this.image.naturalHeight) {
+        return;
+      }
+
+      const { width, height } = this.syncDisplayCanvasSize();
+      this.imageDisplayContext.clearRect(0, 0, width, height);
+      this.imageDisplayContext.drawImage(this.image, 0, 0, width, height);
+
+      if (this.beta === 0 && this.alpha === 1 && this.gamma === 1 && !this.clahe) {
+        return;
+      }
+
+      try {
+        const imageData = this.imageDisplayContext.getImageData(0, 0, width, height);
+        this.applyLinearContrastGamma(imageData.data);
+        if (this.clahe) {
+          this.applyClahe(imageData.data, width, height);
+        }
+        this.imageDisplayContext.putImageData(imageData, 0, 0);
+      } catch {
+        this.setStatus('View enhancement unavailable for this image', 'error');
+      }
+    }
+
+    applyLinearContrastGamma(data) {
+      const gammaExponent = this.gamma;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = this.enhanceChannel(data[i], gammaExponent);
+        data[i + 1] = this.enhanceChannel(data[i + 1], gammaExponent);
+        data[i + 2] = this.enhanceChannel(data[i + 2], gammaExponent);
+      }
+    }
+
+    enhanceChannel(value, gammaExponent) {
+      const linear = this.clamp(this.alpha * value + this.beta, 0, 255);
+      return this.clamp(Math.round(255 * Math.pow(linear / 255, gammaExponent)), 0, 255);
+    }
+
+    applyClahe(data, width, height) {
+      const tilesX = 8;
+      const tilesY = 8;
+      const clipFactor = 3;
+      const tileWidth = Math.ceil(width / tilesX);
+      const tileHeight = Math.ceil(height / tilesY);
+
+      for (let tileY = 0; tileY < tilesY; tileY += 1) {
+        for (let tileX = 0; tileX < tilesX; tileX += 1) {
+          const xStart = tileX * tileWidth;
+          const yStart = tileY * tileHeight;
+          const xEnd = Math.min(width, xStart + tileWidth);
+          const yEnd = Math.min(height, yStart + tileHeight);
+          this.applyClaheTile(data, width, xStart, yStart, xEnd, yEnd, clipFactor);
+        }
+      }
+    }
+
+    applyClaheTile(data, width, xStart, yStart, xEnd, yEnd, clipFactor) {
+      const hist = new Array(256).fill(0);
+      const tilePixels = Math.max(1, (xEnd - xStart) * (yEnd - yStart));
+
+      for (let y = yStart; y < yEnd; y += 1) {
+        for (let x = xStart; x < xEnd; x += 1) {
+          const offset = (y * width + x) * 4;
+          hist[this.luma(data[offset], data[offset + 1], data[offset + 2])] += 1;
+        }
+      }
+
+      const clipLimit = Math.max(1, Math.floor((tilePixels / 256) * clipFactor));
+      let clipped = 0;
+      for (let i = 0; i < hist.length; i += 1) {
+        if (hist[i] > clipLimit) {
+          clipped += hist[i] - clipLimit;
+          hist[i] = clipLimit;
+        }
+      }
+      const redistribute = Math.floor(clipped / 256);
+      const remainder = clipped % 256;
+      for (let i = 0; i < hist.length; i += 1) {
+        hist[i] += redistribute + (i < remainder ? 1 : 0);
+      }
+
+      const map = new Array(256);
+      let cdf = 0;
+      for (let i = 0; i < hist.length; i += 1) {
+        cdf += hist[i];
+        map[i] = this.clamp(Math.round((cdf / tilePixels) * 255), 0, 255);
+      }
+
+      // CLAHE is applied to luminance, then RGB is scaled to preserve color as much as possible.
+      for (let y = yStart; y < yEnd; y += 1) {
+        for (let x = xStart; x < xEnd; x += 1) {
+          const offset = (y * width + x) * 4;
+          const oldLuma = this.luma(data[offset], data[offset + 1], data[offset + 2]);
+          const newLuma = map[oldLuma];
+          if (oldLuma === 0) {
+            data[offset] = newLuma;
+            data[offset + 1] = newLuma;
+            data[offset + 2] = newLuma;
+          } else {
+            const ratio = newLuma / oldLuma;
+            data[offset] = this.clamp(Math.round(data[offset] * ratio), 0, 255);
+            data[offset + 1] = this.clamp(Math.round(data[offset + 1] * ratio), 0, 255);
+            data[offset + 2] = this.clamp(Math.round(data[offset + 2] * ratio), 0, 255);
+          }
+        }
+      }
+    }
+
+    luma(r, g, b) {
+      return Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    }
+
+    clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
     }
 
     renderLabels() {
@@ -640,7 +811,7 @@
       }
 
       const targetName = event.target?.tagName?.toLowerCase();
-      if (targetName === 'select') {
+      if (targetName === 'select' || targetName === 'input' || targetName === 'button') {
         return;
       }
 

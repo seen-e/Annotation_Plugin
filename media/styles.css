@@ -126,6 +126,7 @@ input {
 #image {
   display: block;
   image-rendering: auto;
+  opacity: 0;
 }
 
 #image.fit-image {
@@ -138,7 +139,15 @@ input {
 #overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   cursor: crosshair;
+}
+
+#imageDisplay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .label-popup {
@@ -356,7 +365,7 @@ input {
 
 .range-row {
   display: grid;
-  grid-template-columns: 68px minmax(0, 1fr) 44px;
+  grid-template-columns: 52px minmax(0, 1fr) 42px;
   align-items: center;
   gap: 6px;
 }
@@ -373,6 +382,14 @@ input {
 
 .range-row input {
   width: 100%;
+}
+
+.clahe-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .reset-view-button {
