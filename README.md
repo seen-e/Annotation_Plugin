@@ -49,13 +49,11 @@ If the dataset root contains `annotation.yaml`, labels are loaded from it:
 
 ```yaml
 labels:
-  - name: left_gripper
-    hotkey: "1"
-  - name: right_gripper
-    hotkey: "2"
+  - name: left
+  - name: right
 ```
 
-If no config exists, the default labels are `left_gripper` and `right_gripper`.
+If no config exists, the default labels are `left` and `right` without hotkeys.
 
 ## Annotation Files
 

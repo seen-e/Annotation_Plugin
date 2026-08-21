@@ -6,8 +6,8 @@ const decoder = new TextDecoder('utf-8');
 const encoder = new TextEncoder();
 
 const defaultLabels: LabelDefinition[] = [
-  { name: 'left_gripper', hotkey: '1' },
-  { name: 'right_gripper', hotkey: '2' }
+  { name: 'left' },
+  { name: 'right' }
 ];
 
 export class LabelStore {

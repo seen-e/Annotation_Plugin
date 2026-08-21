@@ -2,7 +2,7 @@
   "name": "vscode-image-annotator",
   "displayName": "Image Annotator",
   "description": "A VS Code Remote SSH friendly image bbox annotation tool.",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "publisher": "local",
   "engines": {
     "vscode": "^1.92.0"
